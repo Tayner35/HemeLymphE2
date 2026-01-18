@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD816 Diagnostic Flowchart</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #0f172a;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #404c5c;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-dark: #60a5fa;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            height: 100vh; 
+            overflow: hidden; 
+            display: flex;
+        }
+
+        /* Flowchart Layout */
+        .fc-wrapper { display: flex; width: 100vw; height: 100vh; overflow: hidden; background: #5a6169; }
+        
+        .fc-sidebar { 
+            width: 280px; 
+            background: var(--bg-card); 
+            border-right: 1px solid var(--border); 
+            padding: 1.5rem; 
+            overflow-y: auto; 
+            z-index: 10; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
+            flex-shrink: 0;
+        }
+        
+        .fc-sidebar h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .fc-instructions { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+        
+        .fc-draggable { 
+            background: var(--bg-body); 
+            padding: 1rem; 
+            margin-bottom: 0.75rem; 
+            border: 2px solid var(--border); 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            font-size: 0.95rem; 
+            font-weight: 500; 
+            transition: all 0.2s; 
+            color: var(--text-main); 
+            user-select: none;
+        }
+        
+        .fc-draggable:hover { 
+            transform: translateX(5px); 
+            border-color: var(--primary); 
+            box-shadow: var(--shadow); 
+        }
+        
+        .fc-draggable.selected { 
+            border-color: var(--primary); 
+            background: #eff6ff; 
+            box-shadow: 0 0 0 2px var(--primary-dark); 
+            transform: translateX(5px); 
+        }
+        
+        .fc-draggable.matched { 
+            background: var(--success); 
+            color: white; 
+            border-color: var(--success); 
+            cursor: default; 
+            pointer-events: none; 
+            text-decoration: line-through; 
+            opacity: 0.6; 
+            box-shadow: none; 
+            transform: none; 
+        }
+
+        .fc-canvas-container { 
+            flex: 1; 
+            position: relative; 
+            cursor: grab; 
+            background-color: #f1f5f9; 
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px); 
+            background-size: 20px 20px; 
+            overflow: hidden; 
+            user-select: none; 
+            -webkit-user-select: none; 
+        }
+        
+        .fc-canvas-container:active { cursor: grabbing; }
+        
+        .fc-controls { 
+            position: absolute; 
+            bottom: 30px; 
+            right: 30px; 
+            display: flex; 
+            gap: 0.75rem; 
+            z-index: 100; 
+        }
+        
+        .fc-btn { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            padding: 0.75rem 1rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            box-shadow: var(--shadow); 
+            color: var(--text-main); 
+            font-weight: 600;
+        }
+        
+        .fc-btn:hover { background: var(--bg-body); transform: translateY(-1px); }
+
+        /* SVG Styles */
+        .node-group { transition: all 0.2s; cursor: pointer; }
+        .node-rect { 
+            fill: var(--bg-card); 
+            stroke: var(--primary); 
+            stroke-width: 2px; 
+            rx: 8; 
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1)); 
+            transition: all 0.3s; 
+        }
+        
+        .node-rect.slot { 
+            stroke: var(--text-muted); 
+            stroke-dasharray: 6,4; 
+            fill: rgba(255,255,255,0.8); 
+        }
+        
+        .node-rect.slot:hover { 
+            stroke: var(--primary); 
+            fill: rgba(59, 130, 246, 0.1); 
+            stroke-width: 3px;
+        }
+        
+        .node-rect.correct { 
+            fill: #dcfce7; 
+            stroke: #16a34a; 
+            stroke-dasharray: none; 
+            stroke-width: 2px;
+            cursor: help; 
+        }
+        
+        /* Wrong Answer Animation */
+        .node-rect.wrong { 
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; 
+            stroke: var(--danger); 
+            fill: #fee2e2; 
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .node-text { 
+            font-size: 14px; 
+            fill: var(--text-main); 
+            font-family: sans-serif; 
+            pointer-events: none; 
+            text-anchor: middle; 
+            dominant-baseline: middle; 
+            font-weight: 500;
+        }
+
+        .node-info-indicator {
+            font-size: 11px;
+            fill: var(--primary-dark);
+            font-family: sans-serif;
+            pointer-events: none;
+            text-anchor: middle;
+            font-weight: 700;
+        }
+        
+        .node-clue { 
+            font-size: 11px; 
+            fill: var(--text-muted); 
+            font-family: sans-serif; 
+            pointer-events: none; 
+            text-anchor: middle; 
+            font-style: italic; 
+        }
+        
+        .link { fill: none; stroke: #94a3b8; stroke-width: 2px; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        
+        .modal-content {
+            background: var(--bg-card); width: 90%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto;
+            border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 2rem; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: var(--text-muted);
+        }
+        .info-title { font-size: 1.5rem; margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+        .info-section { margin-top: 1rem; }
+        .info-label { font-weight: 700; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem; }
+        .info-text { margin: 0; line-height: 1.6; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .fc-wrapper { flex-direction: column; }
+            .fc-sidebar { 
+                width: 100%; 
+                height: 180px; 
+                order: 2; 
+                border-right: none; 
+                border-top: 1px solid var(--border); 
+                padding: 1rem;
+            }
+            .fc-sidebar h2 { font-size: 1rem; margin-bottom: 0.25rem; }
+            .fc-instructions { margin-bottom: 0.5rem; font-size: 0.75rem; }
+            .fc-sidebar > div {
+                display: flex;
+                flex-wrap: wrap; 
+                gap: 0.5rem; 
+            }
+            .fc-draggable { 
+                width: auto; 
+                margin: 0; 
+                font-size: 0.8rem; 
+                padding: 0.5rem 0.75rem;
+            }
+            .fc-canvas-container { order: 1; height: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fc-wrapper">
+        <!-- Sidebar with Draggables -->
+        <div class="fc-sidebar">
+            <h2>Disease Bank</h2>
+            <p class="fc-instructions">
+                <strong>How to play:</strong><br>
+                1. Click a disease below to select it.<br>
+                2. Click the matching empty box in the chart.<br>
+                3. Click a <strong>completed</strong> box to see full disease details.
+            </p>
+            <div id="draggable-list">
+                <!-- Injected via JS -->
+            </div>
+            <div style="margin-top:auto; padding-top:1rem; font-size:0.8rem; color:var(--text-muted); text-align:center">
+                MD816 Exam 2 Study Tool
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="fc-canvas-container" id="fc-canvas-container" 
+             onmousedown="startPan(event)" 
+             onmousemove="pan(event)" 
+             onmouseup="endPan()" 
+             onmouseleave="endPan()"
+             onwheel="zoom(event)">
+            
+            <div class="fc-controls">
+                <button class="fc-btn" onclick="resetView()">Centering View</button>
+                <button class="fc-btn" onclick="clearProgress()" style="color:var(--danger); border-color:var(--danger)">Reset Progress</button>
+            </div>
+
+            <svg id="fc-svg" width="100%" height="100%" viewBox="0 0 2500 1200" style="width:100%; height:100%">
+                <g id="fc-transform-group">
+                    <!-- Content Injected via JS -->
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Disease Info Modal -->
+    <div id="info-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal(event)">&times;</button>
+            <h2 id="modal-title" class="info-title">Disease Name</h2>
+            <div id="modal-body">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Data ---
+        const FLOWCHART_DATA = {
+            nodes: [
+                // Root
+                { id: "root", label: "Hematopoietic Malignancy", x: 1250, y: 50, type: "label", w: 250 },
+                
+                // --- PLASMA BRANCH (Center) ---
+                { id: "plasma", label: "Plasma Cell", x: 1250, y: 150, parent: "root", type: "label", w: 150 },
+                { id: "mm", target: "Multiple Myeloma", clue: "CRAB, M-Spike, IgG", x: 1250, y: 300, parent: "plasma", type: "slot", w: 180 },
+
+                // --- MYELOID BRANCH (Left) ---
+                { id: "myeloid", label: "Myeloid Lineage", x: 650, y: 150, parent: "root", type: "label", w: 180 },
+                
+                { id: "acute_myeloid", label: "Acute (>20% Blasts)", x: 450, y: 300, parent: "myeloid", type: "label", w: 180 },
+                { id: "chronic_myeloid", label: "Chronic (Mature)", x: 850, y: 300, parent: "myeloid", type: "label", w: 180 },
+                
+                // Myeloid Targets
+                { id: "aml", target: "Acute Myeloid Leukemia", clue: "Auer Rods, MPO+", x: 350, y: 500, parent: "acute_myeloid", type: "slot", w: 180 },
+                { id: "apml", target: "Acute Promyelocytic Leukemia", clue: "t(15;17), DIC, ATRA", x: 550, y: 500, parent: "acute_myeloid", type: "slot", w: 200 },
+                
+                { id: "cml", target: "Chronic Myeloid Leukemia", clue: "t(9;22), Basophilia", x: 750, y: 500, parent: "chronic_myeloid", type: "slot", w: 180 },
+                { id: "pv", target: "Polycythemia Vera", clue: "JAK2, High Hct, Itching", x: 950, y: 500, parent: "chronic_myeloid", type: "slot", w: 180 },
+
+                // --- LYMPHOID BRANCH (Right) ---
+                { id: "lymphoid", label: "Lymphoid Lineage", x: 1850, y: 150, parent: "root", type: "label", w: 180 },
+                
+                { id: "acute_lymph", label: "Acute (Blasts)", x: 1550, y: 300, parent: "lymphoid", type: "label", w: 150 },
+                { id: "chronic_lymph", label: "Chronic/Lymphoma", x: 2150, y: 300, parent: "lymphoid", type: "label", w: 180 },
+
+                // Acute Lymphoid Target
+                { id: "all", target: "Acute Lymphoblastic Leukemia", clue: "TdT+, Children, CNS", x: 1550, y: 500, parent: "acute_lymph", type: "slot", w: 200 },
+                
+                { id: "hodgkin", label: "Hodgkin", x: 1850, y: 450, parent: "chronic_lymph", type: "label", w: 120 },
+                { id: "non_hodgkin", label: "Non-Hodgkin", x: 2450, y: 450, parent: "chronic_lymph", type: "label", w: 120 },
+
+                // Hodgkin Target
+                { id: "hl_classic", target: "Classical Hodgkin Lymphoma", clue: "Reed-Sternberg, CD15/30", x: 1850, y: 600, parent: "hodgkin", type: "slot", w: 200 },
+
+                // Non-Hodgkin Sub-branches
+                { id: "nhl_bcell", label: "B-Cell", x: 2250, y: 600, parent: "non_hodgkin", type: "label", w: 100 },
+                { id: "nhl_tcell", label: "T-Cell", x: 2650, y: 600, parent: "non_hodgkin", type: "label", w: 100 },
+
+                // B-Cell Targets (Fanned Out)
+                { id: "burkitt", target: "Burkitt Lymphoma", clue: "t(8;14), Starry Sky, Jaw", x: 2100, y: 750, parent: "nhl_bcell", type: "slot", w: 180 },
+                { id: "dlbcl", target: "Diffuse Large B-Cell Lymphoma", clue: "Aggressive, Most Common", x: 2250, y: 850, parent: "nhl_bcell", type: "slot", w: 220 },
+                { id: "mantle", target: "Mantle Cell Lymphoma", clue: "t(11;14), Cyclin D1", x: 2400, y: 750, parent: "nhl_bcell", type: "slot", w: 180 },
+                { id: "follicular", target: "Follicular Lymphoma", clue: "t(14;18), BCL-2, Wax/Wane", x: 2250, y: 950, parent: "nhl_bcell", type: "slot", w: 180 },
+                
+                // T-Cell Target
+                { id: "mycosis", target: "Mycosis Fungoides", clue: "Skin patches, Cerebriform", x: 2650, y: 750, parent: "nhl_tcell", type: "slot", w: 180 },
+            ],
+            draggables: [
+                "Acute Myeloid Leukemia",
+                "Acute Promyelocytic Leukemia",
+                "Acute Lymphoblastic Leukemia",
+                "Chronic Myeloid Leukemia",
+                "Polycythemia Vera",
+                "Classical Hodgkin Lymphoma",
+                "Burkitt Lymphoma",
+                "Follicular Lymphoma",
+                "Diffuse Large B-Cell Lymphoma",
+                "Mantle Cell Lymphoma",
+                "Mycosis Fungoides",
+                "Multiple Myeloma"
+            ].sort()
+        };
+
+        const DISEASE_DETAILS = {
+            "Acute Myeloid Leukemia": {
+                desc: "Aggressive myeloid neoplasm characterized by the accumulation of myeloblasts in the marrow (>20%).",
+                clinical: "Fatigue (anemia), bleeding/petechiae (thrombocytopenia), infection (neutropenia). Gingival hyperplasia (M4/M5 subtypes).",
+                lab: "Pancytopenia or Leukocytosis. Circulating blasts.",
+                smear: "Large blasts, delicate chromatin, prominent nucleoli. Auer Rods (fused lysosomes/MPO) are pathognomonic.",
+                markers: "MPO+, CD13+, CD33+."
+            },
+            "Acute Promyelocytic Leukemia": {
+                desc: "Subtype of AML (M3) defined by the t(15;17) translocation.",
+                clinical: "Medical Emergency! High risk of DIC (Disseminated Intravascular Coagulation) at presentation.",
+                lab: "Low fibrinogen, prolonged PT/PTT (if DIC).",
+                smear: "Promyelocytes with numerous Auer rods.",
+                genetics: "t(15;17) PML-RARA fusion. Disrupted Retinoic Acid Receptor.",
+                treatment: "ATRA (All-Trans Retinoic Acid) + Arsenic Trioxide."
+            },
+            "Acute Lymphoblastic Leukemia": {
+                desc: "Malignant neoplasm of B or T cell precursors (lymphoblasts). Most common cancer in children.",
+                clinical: "Bone pain (marrow expansion), hepatosplenomegaly. T-cell ALL can present with mediastinal mass (thymic) causing SVC syndrome.",
+                lab: "Lymphoblasts in blood/marrow.",
+                smear: "Small/medium blasts, scant cytoplasm, condensed chromatin. NO Auer rods.",
+                markers: "TdT+ (marker of immaturity). B-ALL: CD10, CD19, CD20. T-ALL: CD2-8."
+            },
+            "Chronic Myeloid Leukemia": {
+                desc: "Myeloproliferative Neoplasm (MPN) driven by the BCR-ABL fusion gene.",
+                clinical: "Splenomegaly (early satiety), constitutional symptoms. Three phases: Chronic, Accelerated, Blast Crisis.",
+                lab: "Extreme Leukocytosis (often >100k).",
+                smear: "Left shift with ALL stages of myeloid maturation seen (myelocytes, metamyelocytes, bands). **Basophilia** is characteristic.",
+                genetics: "t(9;22) Philadelphia Chromosome. BCR-ABL tyrosine kinase.",
+                treatment: "Tyrosine Kinase Inhibitors (Imatinib)."
+            },
+            "Polycythemia Vera": {
+                desc: "MPN characterized by increased red blood cell mass independent of EPO.",
+                clinical: "Aquagenic pruritus (itching after hot shower), plethora (red face), erythromelalgia (burning hands/feet), thrombosis.",
+                lab: "High Hct/Hgb. Low EPO.",
+                genetics: "JAK2 V617F mutation (95%+).",
+                treatment: "Phlebotomy, Hydroxyurea."
+            },
+            "Classical Hodgkin Lymphoma": {
+                desc: "B-cell lymphoma characterized by Reed-Sternberg cells in a background of reactive inflammatory cells.",
+                clinical: "Painless lymphadenopathy (cervical/supraclavicular). B-Symptoms (Fever, Night Sweats, Weight Loss). Pain with alcohol.",
+                pathology: "Reed-Sternberg Cells ('Owl Eyes'). Background of eos, plasma cells, lymphs.",
+                markers: "CD15+, CD30+, CD20- (usually), CD45-.",
+                subtypes: "Nodular Sclerosis (most common), Mixed Cellularity, Lymphocyte Rich, Lymphocyte Depleted."
+            },
+            "Burkitt Lymphoma": {
+                desc: "Highly aggressive B-cell NHL associated with EBV and c-myc translocation.",
+                clinical: "Endemic (African): Jaw lesion. Sporadic: Abdominal mass. Very rapid growth.",
+                pathology: "'Starry Sky' appearance (tangible body macrophages eating apoptotic debris).",
+                genetics: "t(8;14) c-myc translocation.",
+                treatment: "Aggressive chemotherapy with TLS prophylaxis."
+            },
+            "Follicular Lymphoma": {
+                desc: "Indolent B-cell NHL arising from germinal center B-cells.",
+                clinical: "Painless waxing and waning lymphadenopathy. Older adults.",
+                pathology: "Nodular pattern. Small cleaved cells (centrocytes).",
+                genetics: "t(14;18) BCL-2 overexpression (prevents apoptosis).",
+                treatment: "Watch and wait; Rituximab."
+            },
+            "Diffuse Large B-Cell Lymphoma": {
+                desc: "Aggressive B-cell NHL. Most common NHL in adults.",
+                clinical: "Rapidly enlarging mass (nodal or extranodal). B-symptoms common.",
+                pathology: "Diffuse sheets of large B cells disrupting node architecture.",
+                genetics: "Variable. BCL-6 mutations common.",
+                treatment: "R-CHOP."
+            },
+            "Mantle Cell Lymphoma": {
+                desc: "Aggressive B-cell NHL arising from the mantle zone.",
+                clinical: "Lymphadenopathy, hepatosplenomegaly, GI involvement (lymphomatoid polyposis).",
+                markers: "CD5+, CD23- (Distinguishes from CLL). Cyclin D1+.",
+                genetics: "t(11;14) Cyclin D1 overexpression."
+            },
+            "Mycosis Fungoides": {
+                desc: "Cutaneous T-Cell Lymphoma (CTCL).",
+                clinical: "Skin patches, plaques, tumors. Erythroderma (Sezary Syndrome) if leukemic.",
+                pathology: "Pautrier microabscesses (lymphocytes in epidermis). Cerebriform nuclei (brain-like) in Sezary cells.",
+                markers: "CD4+ T-cells."
+            },
+            "Multiple Myeloma": {
+                desc: "Malignant proliferation of plasma cells in the bone marrow.",
+                clinical: "CRAB: HyperCalcemia, Renal failure, Anemia, Bone lytic lesions (back pain). Recurrent infections.",
+                lab: "M-Spike (monoclonal IgG or IgA) on SPEP. Bence-Jones protein (light chains) in urine.",
+                smear: "Rouleaux formation (RBCs stacked like coins). >10% plasma cells in marrow.",
+                treatment: "Proteasome inhibitors (Bortezomib), Lenalidomide."
+            }
+        };
+
+        // --- Store ---
+        const Store = {
+            get: (key, def) => {
+                const val = localStorage.getItem(`md816_fc_${key}`);
+                return val ? JSON.parse(val) : def;
+            },
+            set: (key, val) => {
+                localStorage.setItem(`md816_fc_${key}`, JSON.stringify(val));
+            }
+        };
+
+        // --- Global State ---
+        let svgScale = 1;
+        let svgTranslate = { x: 0, y: 0 };
+        let isDraggingCanvas = false;
+        let lastMousePos = { x: 0, y: 0 };
+        let selectedDisease = null;
+        let revealedHints = new Set(); // Track which hints are clicked
+
+        // --- Core Rendering ---
+        function renderFlowchart() {
+            const matched = Store.get('matched', []);
+
+            // 1. Render Sidebar List
+            const listEl = document.getElementById('draggable-list');
+            listEl.innerHTML = FLOWCHART_DATA.draggables.map(item => {
+                const isMatched = matched.includes(item);
+                const isSelected = selectedDisease === item;
+                // Removed draggable="true" as requested to de-emphasize drag and drop
+                return `
+                    <div class="fc-draggable ${isMatched ? 'matched' : ''} ${isSelected ? 'selected' : ''}" 
+                         onclick="selectDisease(this)"
+                         data-val="${item}">
+                        ${item}
+                        ${isMatched ? ' ✓' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // 2. Render Canvas Content
+            const groupEl = document.getElementById('fc-transform-group');
+            
+            // Generate Links
+            const linksHtml = FLOWCHART_DATA.nodes.map(node => {
+                if(!node.parent) return '';
+                const p = FLOWCHART_DATA.nodes.find(n => n.id === node.parent);
+                if(!p) return '';
+                // Cubic bezier curve
+                return `<path class="link" d="M${p.x} ${p.y + 25} C ${p.x} ${node.y - 40}, ${node.x} ${p.y + 25}, ${node.x} ${node.y - 40}" />`;
+            }).join('');
+
+            // Generate Nodes
+            const nodesHtml = FLOWCHART_DATA.nodes.map(node => {
+                const w = node.w || 120;
+                const h = 50;
+                const isSlot = node.type === 'slot';
+                const isCorrect = matched.includes(node.target);
+                
+                // Safe ID for DOM selection
+                const safeId = node.target ? node.target.replace(/[^a-zA-Z]/g, '') : node.id;
+                
+                // Hint Logic
+                let hintText = "";
+                if (isSlot && !isCorrect) {
+                    if (revealedHints.has(safeId)) {
+                        hintText = node.clue;
+                    } else {
+                        hintText = "(Click for hint)";
+                    }
+                }
+
+                // Node content rendering
+                let contentHtml = '';
+                if(isCorrect) {
+                    contentHtml = `
+                        <text x="${w/2}" y="${h/2 - 7}" class="node-text">
+                            ${node.target}
+                        </text>
+                        <text x="${w/2}" y="${h/2 + 12}" class="node-info-indicator">
+                            Info 🔍
+                        </text>
+                    `;
+                } else {
+                    contentHtml = `
+                        <text x="${w/2}" y="${h/2 + (isSlot ? -5 : 0)}" class="node-text">
+                            ${node.label || "Select Disease & Click Here"}
+                        </text>
+                        ${isSlot ? `<text x="${w/2}" y="${h/2 + 12}" class="node-clue">${hintText}</text>` : ''}
+                    `;
+                }
+
+                return `
+                    <g transform="translate(${node.x - w/2}, ${node.y - h/2})"
+                       onclick="handleSlotClick(this, '${node.target}', '${safeId}')"
+                       class="node-group"
+                       id="node-${safeId}"
+                       style="cursor: ${isCorrect ? 'help' : 'pointer'}">
+                        
+                        <rect class="node-rect ${isSlot ? 'slot' : ''} ${isCorrect ? 'correct' : ''}" 
+                              width="${w}" height="${h}"></rect>
+                        
+                        ${contentHtml}
+                    </g>
+                `;
+            }).join('');
+
+            groupEl.innerHTML = linksHtml + nodesHtml;
+        }
+
+        // --- Interactions ---
+
+        window.selectDisease = (el) => {
+            if(el.classList.contains('matched')) return;
+            
+            const val = el.dataset.val;
+            
+            // Toggle logic
+            if(selectedDisease === val) {
+                selectedDisease = null;
+            } else {
+                selectedDisease = val;
+            }
+            
+            // Re-render sidebar to show selection state
+            renderFlowchart();
+        };
+
+        window.handleSlotClick = (el, targetVal, safeId) => {
+            const matched = Store.get('matched', []);
+            
+            // 1. If already matched, show info dialog
+            if (matched.includes(targetVal)) {
+                showInfo(targetVal);
+                return;
+            }
+
+            // 2. If no disease selected, toggle hint (if it's a slot)
+            if (!selectedDisease && targetVal !== 'undefined') {
+                if (revealedHints.has(safeId)) {
+                    revealedHints.delete(safeId);
+                } else {
+                    revealedHints.add(safeId);
+                }
+                renderFlowchart(); // Re-render to update hint text
+                return;
+            }
+
+            // 3. Attempt match
+            if(!selectedDisease || targetVal === 'undefined') return;
+            attemptMatch(selectedDisease, targetVal, safeId);
+        };
+
+        function attemptMatch(attempt, target, safeId) {
+            if (!attempt || !target) return;
+
+            const nodeGroup = document.getElementById(`node-${safeId}`);
+            const rect = nodeGroup.querySelector('rect');
+
+            if (attempt === target) {
+                // SUCCESS
+                const matched = Store.get('matched', []);
+                if(!matched.includes(attempt)) {
+                    matched.push(attempt);
+                    Store.set('matched', matched);
+                    
+                    // Clear selection on success
+                    selectedDisease = null;
+                    
+                    // Re-render to show green state
+                    renderFlowchart();
+                }
+            } else {
+                // FAILURE
+                // Visual Feedback: Shake and Red
+                rect.classList.add('wrong');
+                setTimeout(() => rect.classList.remove('wrong'), 500); 
+            }
+        }
+
+        // --- Info Modal ---
+        function showInfo(diseaseName) {
+            const data = DISEASE_DETAILS[diseaseName];
+            if (!data) return;
+
+            document.getElementById('modal-title').innerText = diseaseName;
+            
+            let html = `<div class="info-section"><span class="info-label">Description</span><p class="info-text">${data.desc}</p></div>`;
+            
+            if (data.clinical) html += `<div class="info-section"><span class="info-label">Clinical Features</span><p class="info-text">${data.clinical}</p></div>`;
+            if (data.lab) html += `<div class="info-section"><span class="info-label">Lab Findings</span><p class="info-text">${data.lab}</p></div>`;
+            if (data.smear || data.pathology) html += `<div class="info-section"><span class="info-label">Morphology/Pathology</span><p class="info-text">${data.smear || data.pathology}</p></div>`;
+            if (data.markers) html += `<div class="info-section"><span class="info-label">Immunophenotype</span><p class="info-text">${data.markers}</p></div>`;
+            if (data.genetics) html += `<div class="info-section"><span class="info-label">Genetics</span><p class="info-text">${data.genetics}</p></div>`;
+            if (data.treatment) html += `<div class="info-section"><span class="info-label">Treatment</span><p class="info-text">${data.treatment}</p></div>`;
+
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('info-modal').classList.add('open');
+        }
+
+        window.closeModal = (e) => {
+            if (e) e.stopPropagation();
+            document.getElementById('info-modal').classList.remove('open');
+        };
+
+        window.clearProgress = () => {
+            if(confirm("Are you sure you want to reset all progress?")) {
+                Store.set('matched', []);
+                selectedDisease = null;
+                revealedHints.clear();
+                renderFlowchart();
+            }
+        };
+
+        // --- Pan & Zoom ---
+
+        window.startPan = (e) => {
+            if(e.target.closest('.fc-btn') || e.target.closest('.node-group')) return; 
+            isDraggingCanvas = true;
+            lastMousePos = { x: e.clientX, y: e.clientY };
+        };
+
+        window.pan = (e) => {
+            if (!isDraggingCanvas) return;
+            e.preventDefault();
+            
+            // Increased sensitivity multiplier
+            const sensitivity = 1.5;
+            
+            const dx = (e.clientX - lastMousePos.x) * sensitivity;
+            const dy = (e.clientY - lastMousePos.y) * sensitivity;
+            
+            svgTranslate.x += dx;
+            svgTranslate.y += dy;
+            lastMousePos = { x: e.clientX, y: e.clientY };
+            updateTransform();
+        };
+
+        window.endPan = () => {
+            isDraggingCanvas = false;
+        };
+
+        window.zoom = (e) => {
+            e.preventDefault();
+            
+            const scaleFactor = 1.1;
+            const direction = e.deltaY < 0 ? 1 : -1;
+            const factor = direction > 0 ? scaleFactor : 1/scaleFactor;
+            
+            const newScale = svgScale * factor;
+            
+            // Get mouse position relative to the SVG container
+            const container = document.getElementById('fc-canvas-container');
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Calculate world coordinates of the mouse before zoom
+            const worldX = (mouseX - svgTranslate.x) / svgScale;
+            const worldY = (mouseY - svgTranslate.y) / svgScale;
+
+            // Adjust translate to keep the world point under the mouse stationary
+            svgTranslate.x = mouseX - worldX * newScale;
+            svgTranslate.y = mouseY - worldY * newScale;
+            
+            svgScale = newScale;
+            
+            updateTransform();
+        };
+
+        window.resetView = () => {
+            // Updated default zoom to fit content better (~80-90%)
+            const containerW = document.getElementById('fc-canvas-container').clientWidth;
+            const chartW = 2000; // Approx chart width
+            
+            // Calculate scale to fill ~90% of screen width
+            svgScale = (containerW / chartW) * 0.95;
+            
+            // Center the chart:
+            // The content is centered around x=1400.
+            // ScreenCenter = TranslateX + (1400 * scale)
+            // TranslateX = ScreenCenter - (1400 * scale)
+            const screenCenter = containerW / 2;
+            const chartCenter = 1000 * svgScale;
+            
+            svgTranslate.x = screenCenter - chartCenter;
+            svgTranslate.y = 250; 
+
+            updateTransform();
+        };
+
+        function updateTransform() {
+            const g = document.getElementById('fc-transform-group');
+            if(g) {
+                g.setAttribute('transform', `translate(${svgTranslate.x}, ${svgTranslate.y}) scale(${svgScale})`);
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFlowchart();
+            // Need a slight delay to ensure container width is available
+            setTimeout(resetView, 100);
+            
+            // Add Esc key listener for modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        });
+
+    </script>
+</body>
+</html>
