@@ -3,75 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heme-Lymph E2 Knowledge Base</title>
+    <title>MD816 Exam 2 | Hematology & Oncology</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
         :root {
-            --primary: #0f766e;
-            --primary-dark: #115e59;
-            --secondary: #b45309;
-            --bg-body: #f5f1e8;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --bg-body: #f8fafc;
             --bg-card: #ffffff;
-            --bg-sidebar: #0b141f;
-            --bg-glow-1: rgba(13, 148, 136, 0.22);
-            --bg-glow-2: rgba(245, 158, 11, 0.2);
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
+            --bg-sidebar: #0f172a;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
             --text-sidebar: #cbd5e1;
-            --border: #e5e7eb;
-            --success: #059669;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --shadow: 0 18px 45px -30px rgba(15, 23, 42, 0.55);
-            --radius: 0.85rem;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius: 0.75rem;
         }
 
         [data-theme="dark"] {
-            --primary: #2dd4bf;
-            --primary-dark: #14b8a6;
-            --secondary: #f59e0b;
-            --bg-body: #0b1220;
-            --bg-card: #111827;
-            --bg-sidebar: #050b14;
-            --bg-glow-1: rgba(45, 212, 191, 0.16);
-            --bg-glow-2: rgba(245, 158, 11, 0.12);
-            --text-main: #e5e7eb;
+            --primary: #3b82f6;
+            --primary-dark: #60a5fa;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-sidebar: #020617;
+            --text-main: #f1f5f9;
             --text-muted: #94a3b8;
-            --border: #1f2937;
-            --shadow: 0 18px 45px -30px rgba(0, 0, 0, 0.85);
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
         }
 
-        * { box-sizing: border-box; }
-        body {
-            font-family: "Space Grotesk", "IBM Plex Sans", sans-serif;
-            background:
-                radial-gradient(1100px 700px at 85% -10%, var(--bg-glow-1), transparent 60%),
-                radial-gradient(900px 600px at -10% 10%, var(--bg-glow-2), transparent 55%),
-                var(--bg-body);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        h1, h2, h3, .logo { font-family: "Fraunces", serif; letter-spacing: 0.01em; }
+        * { box-sizing: border-box; transition: background-color 0.2s, border-color 0.2s; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background: linear-gradient(180deg, rgba(11, 20, 31, 0.98), rgba(9, 15, 25, 0.98)); color: var(--text-sidebar); display: flex; flex-direction: column; padding: 1.5rem 1rem; flex-shrink: 0; overflow-y: auto; }
+        .sidebar { width: 260px; background: var(--bg-sidebar); color: var(--text-sidebar); display: flex; flex-direction: column; padding: 1.5rem 1rem; flex-shrink: 0; overflow-y: auto; }
         .logo { font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.5rem; }
-        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: var(--text-sidebar); text-decoration: none; border-radius: 0.6rem; margin-bottom: 0.25rem; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
-        .nav-item:hover, .nav-item.active { background: rgba(45, 212, 191, 0.16); color: #fff; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: var(--text-sidebar); text-decoration: none; border-radius: 0.5rem; margin-bottom: 0.25rem; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: #fff; }
         .nav-item svg { width: 20px; height: 20px; }
         .stats-mini { margin-top: auto; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: var(--radius); font-size: 0.85rem; }
         .progress-bar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--primary)); width: 0%; transition: width 0.5s ease; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.5s ease; }
 
         /* Main Content */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         
         /* Top Header */
-        header { height: 64px; border-bottom: 1px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; flex-shrink: 0; box-shadow: var(--shadow); }
+        header { height: 64px; border-bottom: 1px solid var(--border); background: var(--bg-card); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; flex-shrink: 0; }
         .search-container { position: relative; width: 400px; }
         .search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border-radius: 2rem; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); outline: none; }
         .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; height: 16px; }
@@ -83,7 +64,7 @@
         
         /* Dashboard Grid */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.5rem; box-shadow: var(--shadow); display: flex; flex-direction: column; animation: fadeUp 0.5s ease both; animation-delay: var(--delay, 0ms); }
+        .card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.5rem; box-shadow: var(--shadow); display: flex; flex-direction: column; }
         .card h3 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
         
         /* Disease Index */
@@ -94,7 +75,7 @@
         .disease-name { font-weight: 600; font-size: 1.1rem; color: var(--primary); }
         .disease-tags { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
         .tag { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 1rem; background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border); }
-        .tag.yield { background: rgba(245, 158, 11, 0.16); color: #9a3412; border-color: rgba(245, 158, 11, 0.35); font-weight: 600; }
+        .tag.yield { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; font-weight: 600; }
         .disease-detail { display: none; margin-top: 1rem; background: var(--bg-body); padding: 1rem; border-radius: 0.5rem; }
         .disease-detail.open { display: block; animation: slideDown 0.3s ease; }
         .detail-section { margin-bottom: 1rem; }
@@ -106,10 +87,10 @@
         .options-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
         .option-btn { padding: 1rem; text-align: left; background: var(--bg-body); border: 2px solid var(--border); border-radius: 0.5rem; cursor: pointer; font-size: 1rem; color: var(--text-main); }
         .option-btn:hover { border-color: var(--primary); }
-        .option-btn.selected { border-color: var(--primary); background: rgba(13, 148, 136, 0.12); }
+        .option-btn.selected { border-color: var(--primary); background: #eff6ff; }
         .option-btn.correct { border-color: var(--success); background: #dcfce7; color: #064e3b; }
         .option-btn.incorrect { border-color: var(--danger); background: #fee2e2; color: #7f1d1d; }
-        .explanation { margin-top: 2rem; padding: 1rem; background: rgba(5, 150, 105, 0.08); border: 1px solid rgba(5, 150, 105, 0.28); border-radius: 0.5rem; color: #0f5132; display: none; }
+        .explanation { margin-top: 2rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; color: #14532d; display: none; }
         .explanation.show { display: block; }
 
         /* Flashcards */
@@ -152,16 +133,8 @@
             header { padding: 0 1rem; }
             .search-container { width: 100%; max-width: 300px; }
         }
-
-        .page-enter { animation: pageFade 0.35s ease both; }
-
+        
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-        @media (prefers-reduced-motion: reduce) {
-            * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-        }
     </style>
 </head>
 <body>
@@ -172,7 +145,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
-            Heme-Lymph E2
+            MD816 HUB
         </div>
         <a class="nav-item active" onclick="router.navigate('home')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
@@ -207,7 +180,7 @@
         <header>
             <div class="search-container">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" class="search-input" placeholder="Search diseases, drugs, findings..." id="global-search" aria-label="Search knowledge base">
+                <input type="text" class="search-input" placeholder="Search diseases, drugs, findings..." id="global-search">
             </div>
             <button class="theme-toggle" onclick="ui.toggleTheme()" aria-label="Toggle Dark Mode">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -221,7 +194,7 @@
 
     <script>
         /**
-         * HEME-LYMPH EXAM 2 DATABASE
+         * MD816 EXAM 2 DATABASE
          * Extracted from user uploaded documents:
          * - Leukemia & Lymphoma Handouts/Slides
          * - Chemotherapy reviews
@@ -412,11 +385,11 @@
         // --- Store (LocalStorage Wrapper) ---
         const Store = {
             get: (key, def) => {
-                const val = localStorage.getItem(`heme_${key}`);
+                const val = localStorage.getItem(`md816_${key}`);
                 return val ? JSON.parse(val) : def;
             },
             set: (key, val) => {
-                localStorage.setItem(`heme_${key}`, JSON.stringify(val));
+                localStorage.setItem(`md816_${key}`, JSON.stringify(val));
             },
             init: () => {
                 if(!Store.get('srs_data')) Store.set('srs_data', {});
@@ -458,12 +431,12 @@
             const progress = Store.get('progress', {daily:0});
             return `
                 <div class="dashboard-grid">
-                    <div class="card" style="--delay: 60ms">
+                    <div class="card">
                         <h3>Study Progress <span style="color:var(--primary)">${Math.min(progress.daily, 100)}%</span></h3>
                         <p style="color:var(--text-muted)">Daily Goal: Review 20 cards</p>
                         <div class="progress-bar" style="background:var(--bg-body)"><div class="progress-fill" style="width:${Math.min(progress.daily, 100)}%"></div></div>
                     </div>
-                    <div class="card" style="--delay: 120ms">
+                    <div class="card">
                         <h3>High Yield Topics</h3>
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
                             <span class="tag yield">t(9;22) CML</span>
@@ -476,12 +449,12 @@
                 
                 <h2 style="margin-bottom:1rem">Quick Actions</h2>
                 <div class="dashboard-grid">
-                    <div class="card" style="cursor:pointer; border-left: 4px solid var(--primary); --delay: 80ms" onclick="router.navigate('flashcards')">
-                        <h3>Start Review</h3>
+                    <div class="card" style="cursor:pointer; border-left: 4px solid var(--primary)" onclick="router.navigate('flashcards')">
+                        <h3>⚡ Start Review</h3>
                         <p style="color:var(--text-muted)">You have cards due for review.</p>
                     </div>
-                    <div class="card" style="cursor:pointer; border-left: 4px solid var(--success); --delay: 160ms" onclick="router.navigate('quiz')">
-                        <h3>Take Quiz</h3>
+                    <div class="card" style="cursor:pointer; border-left: 4px solid var(--success)" onclick="router.navigate('quiz')">
+                        <h3>📝 Take Quiz</h3>
                         <p style="color:var(--text-muted)">Test your knowledge on Leukemia & Lymphoma.</p>
                     </div>
                 </div>
@@ -670,7 +643,6 @@
         // --- Main Render Loop ---
         function renderApp() {
             const app = document.getElementById('app-view');
-            app.classList.remove('page-enter');
             app.innerHTML = '';
             
             switch(router.current) {
@@ -681,8 +653,6 @@
                 case 'flowcharts': app.innerHTML = renderFlowcharts(); break;
                 default: app.innerHTML = renderHome();
             }
-            void app.offsetWidth;
-            app.classList.add('page-enter');
             updateStats();
         }
 
